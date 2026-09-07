@@ -1,11 +1,3 @@
-"""
-app.py
-
-Development launcher for TripMate AI.
-Run with: python app.py
-Or: uvicorn app:app --reload
-"""
-
 import uvicorn
 
 from app.core.config import settings
