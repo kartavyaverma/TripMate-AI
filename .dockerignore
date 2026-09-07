@@ -1,0 +1,24 @@
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Version control
+.git
+.gitignore
+
+# Secrets — never bake real credentials into an image
+.env
+
+# Docs not needed at runtime
+README.md
+*.md
+LICENSE
