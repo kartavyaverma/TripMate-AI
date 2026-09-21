@@ -91,3 +91,7 @@ desktop.ini
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# Project-specific excludes
+stitch_tripmate_ai_travel_planner/
+TRIPMATE_AI_INTERVIEW_MASTER_GUIDE.md

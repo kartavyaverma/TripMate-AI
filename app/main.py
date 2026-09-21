@@ -7,9 +7,17 @@ routes (home page, health check, favicon) that don't belong in any
 specific router.
 """
 
+import warnings
 from pathlib import Path
 
 import nest_asyncio
+
+# Suppress the Google SDK advisory about AFC in generate_content.
+# langchain-google-genai uses generate_content internally; this is cosmetic only.
+warnings.filterwarnings(
+    "ignore",
+    message=".*Direct use of automatic function calling.*",
+)
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles

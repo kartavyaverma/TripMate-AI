@@ -4,7 +4,7 @@
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/Python-3.11+-3776AB.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.136+-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"></a>
   <a href="https://github.com/langchain-ai/langgraph"><img src="https://img.shields.io/badge/LangGraph-1.2+-FF4B4B.svg?style=for-the-badge&logo=langchain&logoColor=white" alt="LangGraph"></a>
-  <a href="https://groq.com/"><img src="https://img.shields.io/badge/Groq-LPU%20Inference-F55036.svg?style=for-the-badge" alt="Groq"></a>
+  <a href="https://aistudio.google.com/"><img src="https://img.shields.io/badge/Gemini-Google%20AI-4285F4.svg?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemini"></a>
   <a href="https://modelcontextprotocol.io/"><img src="https://img.shields.io/badge/MCP-Protocol%20Enabled-4B0082.svg?style=for-the-badge" alt="Model Context Protocol"></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-Checkpointer-4169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge" alt="License: Apache 2.0"></a>
@@ -12,7 +12,7 @@
 
 ---
 
-**TripMate AI** is a modular multi-agent travel orchestration system powered by **LangGraph**, **Groq LLM**, and the **Model Context Protocol (MCP)**. It includes an intelligent supervisor agent, automated input guardrails with real-time anomaly alerting, parallel specialist agents for flights, hotels, and weather, human-in-the-loop (HITL) approval, and a modern FastAPI web interface.
+**TripMate AI** is a modular multi-agent travel orchestration system powered by **LangGraph**, **Google Gemini LLM**, and the **Model Context Protocol (MCP)**. It includes an intelligent supervisor agent, automated input guardrails with real-time anomaly alerting, parallel specialist agents for flights, hotels, and weather, human-in-the-loop (HITL) approval, and a modern FastAPI web interface.
 
 ---
 
@@ -101,7 +101,7 @@ tripmate-refactored/
 ├── app/
 │   ├── core/
 │   │   ├── config.py               ← Single source of truth for configuration & env variables
-│   │   └── llm.py                  ← Centralized Groq LLM factory
+│   │   └── llm.py                  ← Centralized Gemini LLM factory
 │   │
 │   ├── schemas/
 │   │   └── state.py                ← TravelState TypedDict & state models
@@ -154,7 +154,7 @@ tripmate-refactored/
 ## Prerequisites
 
 - **Python**: Version `3.11` or newer.
-- **Groq API Key**: Required for LLM inference ([Groq Console](https://console.groq.com/)).
+- **Gemini API Key**: Required for LLM inference ([Google AI Studio](https://aistudio.google.com/app/apikey)).
 - **PostgreSQL Database** *(Optional)*: Supabase, Neon, Render, or a local Docker Postgres instance. If omitted or unreachable, TripMate AI automatically falls back to `MemorySaver`.
 - **uv / uvx** *(Optional)*: Required if using the AviationStack MCP server via `uvx` ([Install uv](https://docs.astral.sh/uv/)).
 - **External Tool Keys** *(Optional)*:
@@ -204,7 +204,8 @@ cp .env.example .env
 Open `.env` and fill in your keys:
 
 ```ini
-GROQ_API_KEY=gsk_your_actual_groq_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.8-flash
 DATABASE_URL=postgresql://postgres:password@localhost:5432/tripmate_db
 TAVILY_API_KEY=tvly-your_tavily_key
 AVIATIONSTACK_API_KEY=your_aviationstack_key
@@ -313,9 +314,9 @@ Switch between modes simply by toggling `WEATHER_MCP_MODE` in `.env`.
 
 | Variable | Type | Default | Description |
 |---|---|---|---|
-| `GROQ_API_KEY` | **Required** | — | API key for Groq LLM inference |
+| `GEMINI_API_KEY` | **Required** | — | API key for Google Gemini LLM inference |
 | `DATABASE_URL` | **Required** | — | PostgreSQL connection URI for LangGraph state persistence |
-| `GROQ_MODEL` | Optional | `openai/gpt-oss-20b` | Target Groq model (e.g. `llama-3.3-70b-versatile`) |
+| `GEMINI_MODEL` | Optional | `gemini-3.8-flash` | Target Gemini model (e.g. `gemini-2.0-flash`, `gemini-2.5-flash`) |
 | `TAVILY_API_KEY` | Optional | `""` | Search API key for hotel & attraction discovery |
 | `AVIATIONSTACK_API_KEY` | Optional | `""` | API key for flight schedules and status |
 | `OPENWEATHER_API_KEY` | Optional | `""` | OpenWeather key for local or custom weather queries |

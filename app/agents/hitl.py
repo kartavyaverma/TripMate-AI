@@ -13,6 +13,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.types import interrupt
 
 from app.core.llm import get_llm
+from app.agents.helpers import content_to_str
 from app.schemas.state import TravelState
 
 def human_approval_agent(state: TravelState):
@@ -102,7 +103,7 @@ Important:
     )
 
     return {
-        "final_response": response.content,
+        "final_response": content_to_str(response.content),
         "messages": [response],
         "llm_calls": 1,
     }

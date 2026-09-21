@@ -40,9 +40,9 @@ def _optional(name: str, default: str = "") -> str:
 
 @dataclass(frozen=True)
 class Settings:
-    groq_api_key: str = field(default_factory=lambda: _require("GROQ_API_KEY"))
-    groq_model: str = field(
-        default_factory=lambda: _optional("GROQ_MODEL", "openai/gpt-oss-20b")
+    gemini_api_key: str = field(default_factory=lambda: _require("GEMINI_API_KEY"))
+    gemini_model: str = field(
+        default_factory=lambda: _optional("GEMINI_MODEL", "gemini-3.8-flash")
     )
 
     database_url_raw: str = field(default_factory=lambda: _require("DATABASE_URL"))

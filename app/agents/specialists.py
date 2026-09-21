@@ -14,6 +14,7 @@ import asyncio
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.core.llm import get_llm
+from app.agents.helpers import content_to_str
 from app.mcp.client import (
     aviation_mcp_call,
     extract_destination,
@@ -66,7 +67,7 @@ def flight_agent(state: TravelState):
                 HumanMessage(content=prompt),
             ]
         )
-        flight_data = response.content
+        flight_data = content_to_str(response.content)
     except Exception as exc:
         flight_data = f"Flight information unavailable: {exc}"
 
@@ -164,7 +165,7 @@ If exact live prices are unavailable, clearly label estimates as approximate.
     )
 
     return {
-        "budget_results": response.content,
+        "budget_results": content_to_str(response.content),
         "messages": [AIMessage(content="Budget assessment generated.")],
         "llm_calls": 1,
     }
@@ -208,7 +209,7 @@ Create a clear draft that is ready for human review.
     )
 
     return {
-        "itinerary": response.content,
+        "itinerary": content_to_str(response.content),
         "approval_request": approval_request,
         "messages": [AIMessage(content="Draft itinerary created for human review.")],
         "llm_calls": 1,
