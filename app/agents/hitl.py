@@ -12,8 +12,8 @@ from __future__ import annotations
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.types import interrupt
 
-from app.core.llm import get_llm
-from app.agents.helpers import content_to_str
+from app.core.llm import fit_max_tokens, get_llm
+from app.agents.helpers import clip, content_to_str, warn_if_truncated
 from app.schemas.state import TravelState
 
 def human_approval_agent(state: TravelState):
@@ -64,19 +64,19 @@ Supervisor Constraints:
 {state.get('trip_constraints', {})}
 
 Flights:
-{state.get('flight_results', '')}
+{clip(state.get('flight_results', ''), 'final_flight_results')}
 
 Hotels:
-{state.get('hotel_results', '')}
+{clip(state.get('hotel_results', ''), 'final_hotel_results')}
 
 Weather:
-{state.get('weather_results', '')}
+{clip(state.get('weather_results', ''), 'final_weather_results')}
 
 Budget Analysis:
-{state.get('budget_results', '')}
+{clip(state.get('budget_results', ''), 'final_budget_results')}
 
 Draft Itinerary:
-{state.get('itinerary', '')}
+{clip(state.get('itinerary', ''), 'final_itinerary')}
 
 Format the final answer beautifully using these sections:
 1. Trip Summary
@@ -93,14 +93,18 @@ Important:
 - Include weather-based travel advice.
 - Keep the response useful for real travel planning.
 - Incorporate the human feedback when revision was requested.
+- Keep the whole answer under about 1,300 words, using compact tables, so it is not cut off.
 """
 
-    response = get_llm().invoke(
+    response = get_llm("writer").invoke(
         [
             SystemMessage(content="You are a professional AI travel booking assistant."),
             HumanMessage(content=final_prompt),
-        ]
+        ],
+        max_tokens=fit_max_tokens("writer", final_prompt),
     )
+
+    warn_if_truncated(response, "FINAL AGENT")
 
     return {
         "final_response": content_to_str(response.content),

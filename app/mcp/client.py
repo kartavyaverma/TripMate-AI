@@ -7,10 +7,11 @@ typed async functions (`tavily_mcp_search`, `aviation_mcp_call`,
 call. Agents never touch MCP transport details directly.
 
 Weather can run in two modes (see WEATHER_MCP_MODE in .env):
-  - "remote" (default): talk to a third-party OpenWeather MCP endpoint
-    over streamable HTTP, exactly like the original project.
-  - "custom": spawn app/mcp/custom_weather_mcp_server.py locally over
-    stdio, so the app has no dependency on an external MCP provider.
+  - "custom" (default): spawn app/mcp/custom_weather_mcp_server.py locally
+    over stdio; it calls the OpenWeather REST API with OPENWEATHER_API_KEY.
+  - "remote": talk to a third-party weather MCP endpoint at
+    OPENWEATHER_MCP_URL over streamable HTTP. If that URL is empty the app
+    falls back to "custom" (see Settings.effective_weather_mcp_mode).
 """
 
 from __future__ import annotations
@@ -44,7 +45,7 @@ def _subprocess_env(**updates: str | None) -> dict[str, str]:
     return env
 
 def _build_weather_server_config() -> dict[str, Any]:
-    if settings.weather_mcp_mode == "custom":
+    if settings.effective_weather_mcp_mode == "custom":
         return {
             "transport": "stdio",
             "command": sys.executable,
@@ -55,13 +56,8 @@ def _build_weather_server_config() -> dict[str, Any]:
         }
 
     weather_url = settings.openweather_mcp_url
-    if weather_url:
-        if settings.openweather_api_key and "?" not in weather_url:
-            weather_url = f"{weather_url.rstrip('/')}/?apiKey={settings.openweather_api_key}"
-    else:
-        weather_url = (
-            f"https://mcp.openweather.org/mcp/?apiKey={settings.openweather_api_key or ''}"
-        )
+    if settings.openweather_api_key and "?" not in weather_url:
+        weather_url = f"{weather_url.rstrip('/')}/?apiKey={settings.openweather_api_key}"
 
     return {
         "transport": settings.openweather_mcp_transport,
@@ -106,7 +102,7 @@ async def _get_server_tool(server_name: str, tool_name: str):
                 "activate the project environment, and run `uvx --version`."
             )
 
-    elif server_name == "weather" and settings.weather_mcp_mode != "custom":
+    elif server_name == "weather" and settings.effective_weather_mcp_mode != "custom":
         _require("OPENWEATHER_API_KEY", settings.openweather_api_key)
 
     tools = await client.get_tools(server_name=server_name)
@@ -165,7 +161,7 @@ def _prepare_weather_args(tool: Any, city: str) -> dict[str, Any]:
     return {"city": city}
 
 async def weather_mcp_search(city: str):
-    if settings.weather_mcp_mode != "custom":
+    if settings.effective_weather_mcp_mode != "custom":
         _require("OPENWEATHER_API_KEY", settings.openweather_api_key)
 
     tool = await _find_weather_tool(
@@ -181,7 +177,7 @@ async def weather_mcp_search(city: str):
     return await tool.ainvoke(args)
 
 async def forecast_mcp_search(city: str):
-    if settings.weather_mcp_mode != "custom":
+    if settings.effective_weather_mcp_mode != "custom":
         _require("OPENWEATHER_API_KEY", settings.openweather_api_key)
 
     tool = await _find_weather_tool(
@@ -208,7 +204,7 @@ Travel request:
 Return only the destination name.
 Do not add any explanation.
 """
-    response = get_llm().invoke(prompt)
+    response = get_llm("fast").invoke(prompt, max_tokens=60)
     destination = str(response.content).strip()
 
     if not destination:

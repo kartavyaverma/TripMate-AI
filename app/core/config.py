@@ -40,9 +40,26 @@ def _optional(name: str, default: str = "") -> str:
 
 @dataclass(frozen=True)
 class Settings:
-    gemini_api_key: str = field(default_factory=lambda: _require("GEMINI_API_KEY"))
-    gemini_model: str = field(
-        default_factory=lambda: _optional("GEMINI_MODEL", "gemini-3.8-flash")
+    groq_api_key: str = field(default_factory=lambda: _require("GROQ_API_KEY"))
+    # Three roles, each on its own Groq model so they draw from separate
+    # per-model rate-limit pools (free tier: 8K tokens/min per model).
+    groq_fast_model: str = field(
+        default_factory=lambda: _optional("GROQ_FAST_MODEL", "qwen/qwen3.8-27b")
+    )
+    groq_specialist_model: str = field(
+        default_factory=lambda: _optional("GROQ_SPECIALIST_MODEL", "openai/gpt-oss-20b")
+    )
+    groq_model: str = field(
+        default_factory=lambda: _optional("GROQ_MODEL", "openai/gpt-oss-120b")
+    )
+    # Largest prompt + output one request may ask for. Groq rejects a single
+    # request above the model's tokens-per-minute limit (8K on the free tier),
+    # so the default leaves headroom; raise it on a paid tier.
+    llm_request_token_limit: int = field(
+        default_factory=lambda: int(_optional("LLM_REQUEST_TOKEN_LIMIT", "7600"))
+    )
+    llm_temperature: float = field(
+        default_factory=lambda: float(_optional("LLM_TEMPERATURE", "0.4"))
     )
 
     database_url_raw: str = field(default_factory=lambda: _require("DATABASE_URL"))
@@ -65,7 +82,7 @@ class Settings:
         default_factory=lambda: _optional("OPENWEATHER_MCP_TRANSPORT", "streamable_http")
     )
     weather_mcp_mode: str = field(
-        default_factory=lambda: _optional("WEATHER_MCP_MODE", "remote").lower()
+        default_factory=lambda: _optional("WEATHER_MCP_MODE", "custom").lower()
     )
 
     default_origin: str = field(
@@ -76,6 +93,17 @@ class Settings:
     app_reload: bool = field(
         default_factory=lambda: _optional("APP_RELOAD", "true").lower() == "true"
     )
+
+    @property
+    def effective_weather_mcp_mode(self) -> str:
+        """Weather MCP mode actually used.
+
+        "remote" needs a real OPENWEATHER_MCP_URL; without one there is no
+        endpoint to reach, so fall back to the bundled local server.
+        """
+        if self.weather_mcp_mode == "remote" and not self.openweather_mcp_url:
+            return "custom"
+        return self.weather_mcp_mode
 
     @property
     def database_url(self) -> str:
