@@ -13,8 +13,8 @@ import asyncio
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from app.core.llm import get_llm
-from app.agents.helpers import content_to_str
+from app.core.llm import fit_max_tokens, get_llm
+from app.agents.helpers import clip, content_to_str, warn_if_truncated
 from app.mcp.client import (
     aviation_mcp_call,
     extract_destination,
@@ -57,15 +57,16 @@ def flight_agent(state: TravelState):
 
         prompt = FLIGHT_AGENT_PROMPT.format(
             query=query,
-            airport_data=str(airports)[:3000],
-            airline_data=str(airlines)[:3000],
+            airport_data=clip(airports, "airport_data"),
+            airline_data=clip(airlines, "airline_data"),
         )
 
-        response = get_llm().invoke(
+        response = get_llm("specialist").invoke(
             [
                 SystemMessage(content="You are an expert travel flight planner."),
                 HumanMessage(content=prompt),
-            ]
+            ],
+            max_tokens=fit_max_tokens("specialist", prompt),
         )
         flight_data = content_to_str(response.content)
     except Exception as exc:
@@ -140,13 +141,13 @@ Trip Constraints:
 {state.get('trip_constraints', {})}
 
 Flight Results:
-{state.get('flight_results', '')}
+{clip(state.get('flight_results', ''), 'flight_results')}
 
 Hotel Results:
-{state.get('hotel_results', '')}
+{clip(state.get('hotel_results', ''), 'hotel_results')}
 
 Weather Results:
-{state.get('weather_results', '')}
+{clip(state.get('weather_results', ''), 'weather_results')}
 
 Return:
 1. Estimated cost categories
@@ -157,12 +158,14 @@ Return:
 If exact live prices are unavailable, clearly label estimates as approximate.
 """
 
-    response = get_llm().invoke(
+    response = get_llm("specialist").invoke(
         [
             SystemMessage(content="You are a practical travel budget analyst."),
             HumanMessage(content=prompt),
-        ]
+        ],
+        max_tokens=fit_max_tokens("specialist", prompt),
     )
+    warn_if_truncated(response, "BUDGET AGENT")
 
     return {
         "budget_results": content_to_str(response.content),
@@ -181,27 +184,31 @@ Trip Constraints:
 {state.get('trip_constraints', {})}
 
 Flight Results:
-{state.get('flight_results', '')}
+{clip(state.get('flight_results', ''), 'flight_results')}
 
 Hotel Results:
-{state.get('hotel_results', '')}
+{clip(state.get('hotel_results', ''), 'hotel_results')}
 
 Weather Results:
-{state.get('weather_results', '')}
+{clip(state.get('weather_results', ''), 'weather_results')}
 
 Budget Results:
-{state.get('budget_results', '')}
+{clip(state.get('budget_results', ''), 'budget_results')}
 
 Make the itinerary practical, budget-aware, and easy to follow.
 Create a clear draft that is ready for human review.
+Keep it concise (under about 800 words, compact tables, no repeated details) so it is not cut off.
 """
 
-    response = get_llm().invoke(
+    response = get_llm("writer").invoke(
         [
             SystemMessage(content="You are an expert travel planner."),
             HumanMessage(content=prompt),
-        ]
+        ],
+        max_tokens=fit_max_tokens("writer", prompt),
     )
+
+    warn_if_truncated(response, "ITINERARY AGENT")
 
     approval_request = (
         "Please review the generated draft itinerary. Approve it to create the "

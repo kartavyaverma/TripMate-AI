@@ -4,12 +4,10 @@ app/mcp/custom_weather_mcp_server.py
 Single Responsibility: expose current-weather and 5-day-forecast tools
 over MCP (stdio transport), backed directly by the OpenWeather REST API.
 
-This is OPTIONAL. By default the app talks to a remote OpenWeather MCP
-endpoint (WEATHER_MCP_MODE=remote in .env, the same behavior as the
-original project). Set WEATHER_MCP_MODE=custom to have app/mcp/client.py
-spawn this file as a local stdio MCP server instead — useful if you don't
-have access to a third-party MCP endpoint, or want a fully self-hosted
-weather integration.
+This is the default weather integration (WEATHER_MCP_MODE=custom):
+app/mcp/client.py spawns this file as a local stdio MCP server, so weather
+needs only OPENWEATHER_API_KEY and no third-party MCP endpoint. Set
+WEATHER_MCP_MODE=remote plus OPENWEATHER_MCP_URL to use a hosted endpoint.
 
 Run it standalone for a quick manual smoke test:
     python -m app.mcp.custom_weather_mcp_server
@@ -18,8 +16,15 @@ Run it standalone for a quick manual smoke test:
 
 from __future__ import annotations
 
+import warnings
+
 import requests
-from mcp.server.fastmcp import FastMCP
+
+# FastMCP's settings model triggers a harmless pydantic-settings warning
+# about its `lifespan` field on import; it would otherwise print on every call.
+warnings.filterwarnings("ignore", message=r".*'lifespan' has an incomplete definition.*")
+
+from mcp.server.fastmcp import FastMCP  # noqa: E402
 
 from app.core.config import settings
 

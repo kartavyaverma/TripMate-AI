@@ -47,6 +47,7 @@ User request:
             "You are the input guardrail for a travel-planning application. "
             "Return strict JSON only.",
             guardrail_prompt,
+            max_tokens=200,
         )
         guardrail_result = json_from_llm(guardrail_raw)
         allowed = bool(guardrail_result.get("allowed", True))
