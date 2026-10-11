@@ -3,12 +3,45 @@ let latestAnswerMarkdown = "";
 let waitingForApproval = false;
 
 const AGENT_LABELS = {
-  flight_agent: "✈️ Flight Agent",
-  hotel_agent: "🏨 Hotel Agent",
-  weather_agent: "🌦️ Weather Agent",
-  budget_agent: "💰 Budget Agent",
-  itinerary_agent: "🗓️ Itinerary Agent"
+  flight_agent: "Flights",
+  hotel_agent: "Hotels",
+  weather_agent: "Weather",
+  budget_agent: "Budget",
+  itinerary_agent: "Itinerary"
 };
+
+const TRIP_FACT_LABELS = [
+  ["origin", "From"],
+  ["destination", "To"],
+  ["duration", "Duration"],
+  ["budget", "Budget"]
+];
+
+function showTripFacts(constraints) {
+  const facts = document.getElementById("tripFacts");
+  if (!facts) {
+    return;
+  }
+
+  facts.innerHTML = "";
+  const filled = TRIP_FACT_LABELS.filter(([key]) => String((constraints || {})[key] || "").trim());
+
+  filled.forEach(([key, label], index) => {
+    const cell = document.createElement("div");
+    cell.className = "trip-fact";
+    if (filled.length % 2 === 1 && index === filled.length - 1) {
+      cell.classList.add("wide");
+    }
+    const term = document.createElement("dt");
+    term.textContent = label;
+    const value = document.createElement("dd");
+    value.textContent = String(constraints[key]).trim();
+    cell.append(term, value);
+    facts.appendChild(cell);
+  });
+
+  facts.classList.toggle("hidden", filled.length === 0);
+}
 
 function setPrompt(text) {
   document.getElementById("userInput").value = text;
@@ -67,6 +100,7 @@ function showWorkflow(data) {
   (data.selected_agents || []).forEach((agent) => {
     const chip = document.createElement("span");
     chip.className = "agent-chip";
+    chip.dataset.agent = agent;
     chip.textContent = AGENT_LABELS[agent] || agent;
     chips.appendChild(chip);
   });
@@ -82,6 +116,7 @@ function showWorkflow(data) {
     guardrailBadge.textContent = "Guardrail passed";
   }
 
+  showTripFacts(data.trip_constraints);
   section.classList.remove("hidden");
 }
 
@@ -95,7 +130,10 @@ function showResult(answer, threadId, isDraft = false) {
 
   renderMarkdown(resultBox, latestAnswerMarkdown);
   threadInfo.textContent = `Thread ID: ${threadId}`;
-  resultTitle.textContent = isDraft ? "Draft Travel Plan" : "Your Final AI Travel Plan";
+  const blocked = document.getElementById("guardrailBadge").classList.contains("blocked");
+  const kind = blocked ? "blocked" : isDraft ? "draft" : "final";
+  resultSection.dataset.kind = kind;
+  resultTitle.textContent = { blocked: "Request not accepted", draft: "Draft plan", final: "Final plan" }[kind];
   resultSection.classList.remove("hidden");
 
   resultSection.scrollIntoView({
@@ -123,7 +161,7 @@ function startApprovalTimer() {
   const timerBadge = document.getElementById("approvalTimerBadge");
 
   if (timerBadge) {
-    timerBadge.textContent = `⏱️ Auto-finalizes in ${formatTime(secondsRemaining)}`;
+    timerBadge.textContent = `Auto-finalizes in ${formatTime(secondsRemaining)}`;
     timerBadge.classList.remove("warning");
   }
 
@@ -131,7 +169,7 @@ function startApprovalTimer() {
     secondsRemaining--;
 
     if (timerBadge) {
-      timerBadge.textContent = `⏱️ Auto-finalizes in ${formatTime(secondsRemaining)}`;
+      timerBadge.textContent = `Auto-finalizes in ${formatTime(secondsRemaining)}`;
 
       if (secondsRemaining <= 30) {
         timerBadge.classList.add("warning");

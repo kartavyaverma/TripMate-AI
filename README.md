@@ -52,7 +52,7 @@
 - **Human-in-the-Loop (HITL) Review**: Pauses execution at `human_approval`, enabling users to review interim plans, suggest changes, or confirm before final generation.
 - **Resilient State Checkpointing**: Supports PostgreSQL persistence (`PostgresSaver`) for multi-turn sessions with automatic, graceful fallback to `MemorySaver` when PostgreSQL is unavailable.
 - **Groq Multi-Model LLM Layer**: Three Groq models split by role (fast routing, specialist analysis, long-form writing), each drawing on its own rate-limit pool, with per-request token budgeting so no call exceeds the free tier's 8K tokens-per-minute limit.
-- **Editorial Web UI**: A warm, magazine-style interface (Playfair Display + Plus Jakarta Sans, terracotta & sage palette) with an itinerary-flow progress bar, quick-start prompts, a 2-minute auto-approval countdown, markdown rendering, copy, and PDF export.
+- **Web UI**: A plain, product-style interface with a boarding-pass request card, a ticket strip showing the extracted trip details (from, to, duration, budget), a steps list that ticks off the agents that actually ran, a 2-minute auto-approval countdown, markdown rendering, copy, and PDF export.
 
 ---
 
@@ -178,8 +178,8 @@ tripmate-refactored/
 │
 └── static/
     ├── script.js                   ← Asynchronous client API requests & UI state management
-    ├── ui.js                       ← Presentation-only: syncs the itinerary-flow bar with app state
-    └── style.css                   ← Editorial design system (tokens, layout, responsive rules)
+    ├── ui.js                       ← Presentation-only: reflects app state in the planning steps list
+    └── style.css                   ← UI styles (tokens, ticket card, layout, responsive rules)
 ```
 
 ### Architectural Layer Responsibilities
