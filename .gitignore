@@ -95,3 +95,7 @@ desktop.ini
 # Project-specific excludes
 stitch_tripmate_ai_travel_planner/
 TRIPMATE_AI_INTERVIEW_MASTER_GUIDE.md
+
+# Local-only files
+.claude/
+TRIPMATE_CODE_FLOW_EXPLAINED.md
